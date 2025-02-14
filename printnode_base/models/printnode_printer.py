@@ -88,6 +88,11 @@ class PrintNodePrinter(models.Model):
         required=False,
     )
 
+    default_paper_id = fields.Many2one(
+        'printnode.paper',
+        string='Default Paper'
+    )
+
     account_id = fields.Many2one(
         'printnode.account',
         string='Account',
@@ -488,6 +493,10 @@ class PrintNodePrinter(models.Model):
             options.update({'fit_to_page': False})
         if params:
             options.update(params)
+        if 'bin' not in options and self.default_printer_bin:
+            options.update({'bin': self.default_printer_bin.name})
+        if 'paper' not in options and self.default_paper_id:
+            options.update({'paper': self.default_paper_id.name})
 
         return options
 

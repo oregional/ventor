@@ -14,6 +14,16 @@ Change Log
 
 |
 
+* 2.7.0 (2024-12-13)
+    - [NEW] Added new scenario: Print multiple lot labels (after validation) based on packaging quantity
+    - [NEW] Added new scenario: Print multiple product labels (after validation) based on packaging quantity
+    - [NEW] Added support for printing reports for both stock.move and stock.move.line models in the "Print Operations" wizard.
+    - Added the ability to select default bin on printer level
+    - Improved printing of EasyPost shipping labels
+    - Optimized real-time scenarios to support Ventor PRO/Lifetime and Odoo Barcode applications
+    - Added functionality to skip printing the UPS Commercial Invoice for UPS shipments.
+    - Added support for using scales with names that include "/" and whitespace characters.
+
 * 2.6.10 (2024-08-14)
     - Fixed issue with scenario
 

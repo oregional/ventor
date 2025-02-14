@@ -1,6 +1,9 @@
 # Copyright 2021 VentorTech OU
 # See LICENSE file for full copyright and licensing details.
 
+import math
+import re
+
 from collections import defaultdict
 from odoo import fields, models, _
 from odoo.exceptions import UserError
@@ -77,8 +80,12 @@ class StockPicking(models.Model):
 
             # Print product labels
             self.print_scenarios(action='print_product_labels_on_transfer')
+            self.print_scenarios(action='print_product_labels_based_on_packaging_on_transfer')
 
             # Print lot labels
+            self.print_scenarios(
+                action='print_multiple_lot_labels_based_on_packaging_after_validation'
+            )
             self.print_scenarios(action='print_single_lot_labels_on_transfer_after_validation')
             self.print_scenarios(action='print_multiple_lot_labels_on_transfer_after_validation')
 
@@ -212,7 +219,7 @@ class StockPicking(models.Model):
         else:
             for attach in message.attachment_ids:
                 if (
-                    self.carrier_id.delivery_type == 'sendcloud' and
+                    self.carrier_id.delivery_type in ['sendcloud', 'ups'] and
                     'label' not in attach.name.lower()
                 ):
                     continue
@@ -221,16 +228,39 @@ class StockPicking(models.Model):
 
         return label_attachments
 
+    def _get_message_to_parse(self, tracking_list):
+        """
+        Getting all messages related to the current stock picking, where the body
+        contains any of the given tracking references.
+        """
+        base_domain = [
+            ('model', '=', 'stock.picking'),
+            ('res_id', '=', self.id),
+            ('message_type', '=', 'notification')
+        ]
+
+        messages = self.env['mail.message']
+
+        if tracking_list:
+            # Add to base_domain with the conditions "OR" if there are several tracking references.
+            # If there is one, add it to the domain using "AND".
+            tracking_domain = ['|'] * (len(tracking_list) - 1)
+            for track in tracking_list:
+                tracking_domain.append(('body', 'ilike', track))
+            base_domain += tracking_domain
+            return messages.search(base_domain, order='create_date asc')
+
+        return messages
+
     def _create_shipping_labels(self):
         """
         Creates shipping labels for the current stock picking record.
         """
-        messages_to_parse = self.env['mail.message'].search([
-            ('model', '=', 'stock.picking'),
-            ('res_id', '=', self.id),
-            ('message_type', '=', 'notification'),
-            ('body', 'ilike', self.carrier_tracking_ref),
-        ], order='create_date asc')
+
+        # Splitting tracking references by separator, if there are several of them
+        tracking_list = re.sub(r'[+\-\\,/*\n\t\r]', ' ', self.carrier_tracking_ref).split()
+
+        messages_to_parse = self._get_message_to_parse(tracking_list)
         messages_to_parse = messages_to_parse.filtered('attachment_ids')
 
         # Get return shipping labels
@@ -461,6 +491,72 @@ class StockPicking(models.Model):
         })
         wizard.do_print()
 
+    def _scenario_print_multiple_lot_labels_based_on_packaging_after_validation(
+        self, scenario, report_id, printer_id, number_of_copies=1, **kwargs
+    ):
+        """
+        Print multiple lot labels based on packaging for each move line (after validation).
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+
+        new_move_lines = kwargs.get('new_move_lines', self.move_line_ids)
+        print_options = kwargs.get('options', {})
+
+        printed = self._print_lot_labels_report_based_on_packaging_quantity(
+            new_move_lines,
+            report_id,
+            printer_id,
+            copies=number_of_copies,
+            options=print_options)
+
+        return printed
+
+    def _scenario_print_product_labels_based_on_packaging_on_transfer(
+        self, scenario, number_of_copies=1, **kwargs
+    ):
+        """
+        Print multiple product labels based on packaging for each move line (after validation).
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+
+        move_lines_qty_done_and_packaging = self.move_line_ids.filtered(
+            lambda ml: (
+                ml.move_id.product_packaging_id
+                and ml.move_id.product_packaging_id.qty != 0
+                and not ml.printnode_printed
+                and ml.quantity > 0
+            )
+        )
+
+        prepared_data = self._prepare_data_for_scenarios_to_print_product_labels(
+            scenario,
+            move_lines=move_lines_qty_done_and_packaging,
+            **kwargs,
+        )
+
+        if not prepared_data:
+            return False
+
+        data = prepared_data.get('data', {}).get('quantity_by_product')
+
+        # convert number of labels for the line, according to the multiplicity of packaging
+        for move_line in move_lines_qty_done_and_packaging:
+            labels_qty = move_line.quantity / move_line.move_id.product_packaging_id.qty
+            product_id = move_line.product_id.id
+            if isinstance(product_id, int):
+                product_id = str(product_id)
+                data[product_id] = math.ceil(labels_qty)
+
+        printed = prepared_data.get('printer_id').printnode_print(
+            report_id=prepared_data.get('report_id'),
+            objects=prepared_data.get('product_ids'),
+            data=prepared_data.get('data'),
+            copies=number_of_copies,
+            options=prepared_data.get('print_options', {}),
+        )
+
+        return printed
+
     def _change_number_of_lot_labels_to_one(self, custom_barcodes):
         """
         This method changes barcodes quantities to 1.
@@ -531,6 +627,44 @@ class StockPicking(models.Model):
                 printed = True
 
         return printed
+
+    def _print_lot_labels_report_based_on_packaging_quantity(
+        self, new_move_lines, report_id, printer_id, copies=1, options=None
+    ):
+        """
+        This method runs the printing of lot labels based on packaging quantity.
+        It filters the move lines that have a lot ID, a non-zero packaging quantity,
+        and a positive quantity done, and have not been printed yet. It then prints
+        the lot labels for each filtered move line.
+        """
+        move_lines_with_lots_and_qty_done_and_packaging = new_move_lines.filtered(
+            lambda ml: (
+                ml.move_id.product_packaging_id
+                and ml.move_id.product_packaging_id.qty != 0
+                and ml.lot_id
+                and not ml.printnode_printed
+                and ml.quantity > 0
+            )
+        )
+
+        lots = self.env['stock.lot']
+        for move_line in move_lines_with_lots_and_qty_done_and_packaging:
+            labels_qty = move_line.quantity / move_line.move_id.product_packaging_id.qty
+            for i in range(math.ceil(labels_qty)):
+                lots = lots.concat(move_line.lot_id)
+
+        if lots:
+            printer_id.printnode_print(
+                report_id,
+                lots,
+                copies=copies,
+                options=options,
+            )
+
+            move_lines_with_lots_and_qty_done_and_packaging.write({'printnode_printed': True})
+            return True
+
+        return False
 
     def _prepare_data_for_scenarios_to_print_product_labels(
         self, scenario, move_lines=None, with_qty=False, **kwargs,

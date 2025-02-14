@@ -17,8 +17,12 @@
                 <group>
                     <field name="record_line_ids" nolabel="1" colspan="2">
                         <tree editable="bottom" create="false">
-                            <field name="name" readonly="1"/>
+                            <!--
+                                Technical field: do not remove! Without this field line_ids will be
+                                with empty record_id value.
+                             -->
                             <field name="record_id" invisible="1"/>
+                            <field name="name" readonly="1"/>
                             <field name="quantity"/>
                         </tree>
                     </field>

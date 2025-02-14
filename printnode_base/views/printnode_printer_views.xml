@@ -21,6 +21,7 @@
                         <field name="computer_id" />
                         <field name="account_id" />
                         <field name="paper_ids" widget="many2many_tags" />
+                        <field name="default_paper_id" />
                         <field name="format_ids" widget="many2many_tags" />
                         <field name="default_printer_bin" domain="[('printer_id', '=', id)]" options="{'no_create': True}" />
                         <field name="printer_bin_ids"/>
@@ -72,6 +73,7 @@
                     <field name="id" invisible="1" />
                     <field name="default_printer_bin" domain="[('printer_id', '=', id)]" options="{'no_create': True}" />
                     <field name="paper_ids" widget="many2many_tags" />
+                    <field name="default_paper_id" />
                     <field name="format_ids" widget="many2many_tags" />
                     <field name="error" invisible="1" />
                     <field name="notes" widget="html" />

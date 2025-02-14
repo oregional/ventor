@@ -20,17 +20,27 @@ class StockMoveLine(models.Model):
     def create(self, vals_list):
         mls = super().create(vals_list)
 
-        self._call_scenarios(mls)
+        mls_picked = mls.filtered(lambda ml: ml.picked)
+        if mls_picked:
+            self._call_scenarios(mls_picked)
 
         return mls
 
     def write(self, vals):
         changed_move_lines = self.env['stock.move.line']
         for move_line in self:
-            if 'quantity' in vals:
-                qty_change = vals.get('quantity') - move_line.quantity
-                if qty_change:
-                    changed_move_lines |= move_line
+            quantity = vals.get('quantity')
+            qty_done = vals.get('qty_done')
+            picked = vals.get('picked')
+
+            # If quantity is updated from Ventor PRO
+            if quantity and quantity > 0 and picked:
+                changed_move_lines |= move_line
+
+            # Additional case: stock_barcode module is installed
+            # qty_done field will be there only if this module is installed
+            elif qty_done and qty_done > 0:
+                changed_move_lines |= move_line
 
         res = super().write(vals)
 
