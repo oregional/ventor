@@ -12,6 +12,9 @@ class Company(models.Model):
 
     zld_allowed_models = fields.Many2many(
         'ir.model',
+        relation='ir_model_res_company_zld_rel',
+        column1='company_id',
+        column2='model_id',
         string='Allowed models to "ZPL Label Designer"',
     )
 

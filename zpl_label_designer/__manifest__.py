@@ -6,7 +6,7 @@
     'summary': """
         Design and publish ZPL labels with easy to use interface.
     """,
-    'version': '17.0.1.3.2',
+    'version': '17.0.1.3.3',
     'category': 'Tools',
     "images": ["static/description/images/banner.gif"],
     'author': 'VentorTech',

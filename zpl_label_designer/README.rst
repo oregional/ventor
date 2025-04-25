@@ -7,6 +7,10 @@ Change Log
 
 |
 
+* 1.3.3 (2025-04-18)
+    - Added possibility to print ZPL labels for Workorder (Print Labels button)
+    - Fixed minor issues
+
 * 1.3.2 (2024-04-12)
     - [NEW] Added support of printing custom ZPL labels for product lots in "Print Labels" wizard on transfers
 

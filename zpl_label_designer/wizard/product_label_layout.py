@@ -6,6 +6,7 @@ PRODUCT_LABEL_MODELS_MAPPING = {
     'product.product': 'product.product',
     'stock.picking': 'product.product',
     'picking.label.type': 'product.product',
+    'quality.check': 'product.product',
 }
 
 
