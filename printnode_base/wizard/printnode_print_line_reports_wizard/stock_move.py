@@ -19,12 +19,14 @@ class PrintnodePrintStockMoveReportsWizard(models.TransientModel):
     report_id = fields.Many2one(
         comodel_name='ir.actions.report',
         domain='[("id", "in", report_ids)]',
+        string='Report',
     )
 
     # Technical field to update report_id field on UI if user changes show_operations field
     report_ids = fields.Many2many(
         comodel_name='ir.actions.report',
         compute='_compute_report_ids',
+        string='Reports',
     )
 
     stock_move_record_line_ids = fields.One2many(

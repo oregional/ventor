@@ -4,6 +4,7 @@
 import math
 import re
 
+from datetime import timedelta
 from collections import defaultdict
 from odoo import fields, models, _
 from odoo.exceptions import UserError
@@ -108,23 +109,82 @@ class StockPicking(models.Model):
             shipping_label.sudo().write({'label_status': 'inactive'})
         return super(StockPicking, self).cancel_shipment()
 
-    def print_last_shipping_label(self):
-        """ Print last shipping label if possible.
+    def print_last_shipping_labels(self):
+        """
+        Print last shipping labels using button on transfer
         """
         self.ensure_one()
 
         if self.picking_type_code != 'outgoing':
             return
 
-        label = self.shipping_label_ids[:1]
-        if not (label and label.label_ids and label.label_status == 'active'):
-            if not self.env.company.print_sl_from_attachment:
+        if not self.shipping_label_ids:
+            return self.print_last_shipping_labels_from_attachments()
+
+        last_label = self.shipping_label_ids[:1]
+        start_time = last_label.create_date - timedelta(minutes=5)
+
+        # Search all labels created in the last 5 minutes
+        last_label_ids = last_label.search([
+            ('picking_id', '=', self.id),
+            ('create_date', '>=', start_time),
+            ('label_status', '=', 'active'),
+        ])
+
+        for label in last_label_ids:
+            label.print_via_printnode()
+
+    def print_shipping_labels(self):
+        """
+        Print shipping labels after validation OUT transfer
+        """
+        self.ensure_one()
+
+        if self.picking_type_code != 'outgoing':
+            return
+
+        for label in self.shipping_label_ids:
+            label.print_via_printnode()
+
+    def print_last_shipping_labels_from_attachments(self, raise_exception=True):
+        """
+        Print last shipping labels from attachments
+        """
+        self.ensure_one()
+
+        if self.picking_type_code != 'outgoing':
+            return
+
+        domain = [
+            ('res_id', '=', self.id),
+            ('res_model', '=', self._name),
+            ('company_id', '=', self.company_id.id),
+        ]
+
+        attachment = self.env['ir.attachment'].search(
+            domain, order='create_date desc', limit=1
+        )
+        if not attachment:
+            if raise_exception:
                 raise UserError(_(
-                    'There are no available "shipping labels" for printing, '
-                    'or last "shipping label" in state "In Active"'
+                    'There are no attachments in the current Transfer.'
                 ))
-            return self._print_sl_from_attachment(self.env.context.get('raise_exception_slp', True))
-        return label.print_via_printnode()
+            return
+
+        # Search all attachments created in the last 5 minutes
+        start_time = attachment.create_date - timedelta(minutes=5)
+        domain.append(('create_date', '>=', start_time))
+        last_attachments = self.env['ir.attachment'].search(domain)
+
+        printer = self.env.user.get_shipping_label_printer(self.carrier_id, raise_exc=True)
+
+        for doc in last_attachments:
+            params = {
+                'title': doc.name,
+                'type': 'qweb-pdf' if doc.mimetype == 'application/pdf' else 'qweb-text',
+            }
+            printer.printnode_print_b64(
+                doc.datas.decode('ascii'), params, check_printer_format=False)
 
     def send_to_shipper(self):
         """
@@ -158,40 +218,12 @@ class StockPicking(models.Model):
 
         self._create_shipping_labels()
 
-        if auto_print and (self.shipping_label_ids or company.print_sl_from_attachment):
-            self.with_context(raise_exception_slp=False).print_last_shipping_label()
-
-    def _print_sl_from_attachment(self, raise_exception=True):
-        self.ensure_one()
-
-        domain = [
-            ('res_id', '=', self.id),
-            ('res_model', '=', self._name),
-            ('company_id', '=', self.company_id.id),
-        ]
-
-        attachment = self.env['ir.attachment'].search(
-            domain, order='create_date desc', limit=1
-        )
-        if not attachment:
-            if raise_exception:
-                raise UserError(_(
-                    'There are no attachments in the current Transfer.'
-                ))
-            return
-
-        domain.append(('create_date', '=', attachment.create_date))
-        last_attachments = self.env['ir.attachment'].search(domain)
-
-        printer = self.env.user.get_shipping_label_printer(self.carrier_id, raise_exc=True)
-
-        for doc in last_attachments:
-            params = {
-                'title': doc.name,
-                'type': 'qweb-pdf' if doc.mimetype == 'application/pdf' else 'qweb-text',
-            }
-            printer.printnode_print_b64(
-                doc.datas.decode('ascii'), params, check_printer_format=False)
+        if auto_print:
+            if self.shipping_label_ids:
+                self.with_context(raise_exception_slp=False).print_shipping_labels()
+            elif self.env.company.print_sl_from_attachment:
+                self.with_context(raise_exception_slp=False) \
+                    .print_last_shipping_labels_from_attachments()
 
     def _create_backorder(self):
         backorders = super(StockPicking, self)._create_backorder()

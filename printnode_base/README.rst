@@ -7,6 +7,12 @@ Change Log
 
 |
 
+* 2.7.1 (2025-04-18)
+    - Improved functionality for printing multiple shipping labels related to a single transfer
+    - Fixed issue with limitations on importing printers and devices
+    - Fixed issue with disabling modules for different users within the same company
+    - Fixed minor issues
+
 * 2.7.0 (2024-12-13)
     - [NEW] Added new scenario: Print multiple lot labels (after validation) based on packaging quantity
     - [NEW] Added new scenario: Print multiple product labels (after validation) based on packaging quantity

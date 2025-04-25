@@ -100,7 +100,11 @@ export default class PrintActionHandler {
 
             try { // Case of a serialized Odoo Exception: It is Json Parsable
                 const printResultJson = JSON.parse(printResult);
-                if (printResultJson.success && printResultJson.notify) {
+                if (printResultJson.success) {
+                    if (!printResultJson.notify) {
+                        return true;
+                    }
+
                     env.services.notification.add(printResultJson.message, {
                         sticky: false,
                         type: "info",

@@ -67,6 +67,8 @@ export class DirectPrintStatusMenu extends Component {
                     this.state.releases = data.releases;
                     this.state.devices = data.devices;
                     this.state.workstations = data.workstations;
+                    this.state.dpc_company_enabled = data.dpc_company_enabled;
+                    this.state.dpc_user_enabled = data.dpc_user_enabled;
                 }
 
                 this.state.loaded = true;

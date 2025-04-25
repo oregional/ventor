@@ -216,16 +216,16 @@ class PrintNodeAccount(models.Model):
     def import_devices(self):
         """ Re-import list of printers into OpenERP.
         """
-        computers = self._send_printnode_request('computers') or []
+        computers = self._get_all_computers()
 
         self._deactivate_devices()
 
         for computer in computers:
             odoo_computer = self._get_node('computer', computer, self.id)
-            get_printers_url = f"computers/{computer['id']}/printers"
+            computer_printers = self._get_all_printers(computer['id'])
 
             # Downloading printers with tray bins
-            for printer in self._send_printnode_request(get_printers_url) or []:
+            for printer in computer_printers:
                 odoo_printer = self._get_node('printer', printer, odoo_computer.id)
 
                 # Splitted to 2 checks because capabilities can include None values in some cases
@@ -389,7 +389,53 @@ class PrintNodeAccount(models.Model):
 
         return node
 
-    def _send_printnode_request(self, uri, method='GET'):
+    def _get_all_computers(self):
+        computers = []
+
+        params = {'limit': 100}
+
+        while True:
+            resp = self._send_printnode_request('computers', params=params)
+
+            if not resp or not isinstance(resp, list):
+                break
+
+            computers += resp
+
+            if len(resp) < params['limit']:
+                # No more computers
+                break
+
+            # Fetch next page
+            params['after'] = resp[-1]['id']
+
+        return computers
+
+    def _get_all_printers(self, computer_id):
+        printers = []
+
+        params = {'limit': 100}
+
+        while True:
+            resp = self._send_printnode_request(
+                f'computers/{computer_id}/printers',
+                params=params)
+
+            if not resp or not isinstance(resp, list):
+                break
+
+            printers += resp
+
+            if len(resp) < params['limit']:
+                # No more printers
+                break
+
+            # Fetch next page
+            params['after'] = resp[-1]['id']
+
+        return printers
+
+    def _send_printnode_request(self, uri, params=None, method='GET'):
         """
         Send request with basic authentication and API key
         """
@@ -401,7 +447,8 @@ class PrintNodeAccount(models.Model):
             request_url = f'{self.endpoint}/{uri}'
             self.printnode_logger(Constants.REQUESTS_LOG_TYPE, f'{method} request: {request_url}')
 
-            resp = self._get_requests_method(method)(request_url, auth=auth, timeout=20)
+            resp = self._get_requests_method(method)(
+                request_url, params=params, auth=auth, timeout=20)
 
             # 403 is a HTTP status code which can be returned for child accounts in some cases
             # like checking printing limits on PrintNode
@@ -614,7 +661,7 @@ class PrintNodeAccount(models.Model):
         # Step 1: Find computers that are not in Printnode and delete them.
         list_printnode_computer_ids = list(map(
             lambda pc: pc.get('id'),
-            self._send_printnode_request('computers') or []
+            self._get_all_computers()
         ))
         odoo_computer_ids = self.with_context(active_test=False).computer_ids
 

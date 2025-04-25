@@ -15,6 +15,7 @@
                             <div class="col-12 col-lg-6 o_setting_box">
                                 <div class="o_setting_right_pane">
                                     <field name="printnode_account_id" invisible="1"/>
+                                    <field name="company_id" invisible="1" readonly="1"/>
                                     <label for="dpc_api_key" class="o_form_label d-block">API Key</label>
                                     <field name="dpc_api_key" readonly="True" class="w-100" style="word-break: break-word" />
 
