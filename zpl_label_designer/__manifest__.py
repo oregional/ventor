@@ -16,7 +16,7 @@
         Dynamic ZPL Labels | Custom Labels in Odoo | Direct Print Integration | ZPL Print Odoo |
         Label Generator for Odoo | Odoo Warehouse Labels
     """,
-    'version': '19.0.1.3.3',
+    'version': '19.0.1.3.5',
     'category': 'Tools',
     "images": ["static/description/images/banner.gif"],
     'author': 'VentorTech',
@@ -24,7 +24,7 @@
     'support': 'support@ventor.tech',
     'license': 'OPL-1',
     'live_test_url': 'https://odoo.ventor.tech/',
-    'price': 79.20,
+    'price': 99.00,
     'currency': 'EUR',
     'depends': ['base', 'product', 'stock', 'product_expiry'],
     'data': [
