@@ -7,6 +7,12 @@ Change Log
 
 |
 
+* 1.3.5 (2026-03-02)
+    - [FIX] Fixed minor internal issues to improve overall reliability.
+
+* 1.3.4 (2026-01-28)
+    - Added support for Data Matrix barcodes
+
 * 1.3.3 (2025-04-18)
     - Added possibility to print ZPL labels for Workorder (Print Labels button)
     - Fixed minor issues

@@ -16,11 +16,12 @@ from odoo.addons.web.controllers.report import ReportController
 from odoo.addons.web.controllers.dataset import DataSet
 from odoo.http import request, db_list, serialize_exception
 from odoo.tools.translate import _
+from odoo.exceptions import UserError
 
 from werkzeug.exceptions import BadRequest, NotFound, SecurityError
 from werkzeug.urls import url_unquote
 
-from .utils import add_env
+from .utils import add_env, extend_request_context
 
 
 _logger = logging.getLogger(__name__)
@@ -129,8 +130,17 @@ class ReportControllerProxy(ReportController):
         print_data = {'can_print': False}
         request_content = json.loads(data)
 
-        report_url, report_type, printer_id, printer_bin = \
-            request_content[0], request_content[1], request_content[2], request_content[3]
+        if isinstance(request_content, list) and len(request_content) < 5:
+            _logger.warning(f"Direct Print: incorrect content value — fewer than five values: {request_content}")
+            return print_data
+
+        report_url, report_type, printer_id, printer_bin, source_document = (
+            request_content[0],
+            request_content[1],
+            request_content[2],
+            request_content[3],
+            request_content[4],
+        )
 
         print_data['report_type'] = report_type
 
@@ -178,14 +188,16 @@ class ReportControllerProxy(ReportController):
             # If report is excluded from printing, than just download it
             return print_data
 
-        print_data["report_policy"] = report_policy
+        print_data['report_policy'] = report_policy
 
         # STEP 4. Now let's check if we can define printer for the current report.
         # If not - just reset to default
         if not printer_id:
             # Update context (there can be information about workstation devices)
             new_context = dict(request.env.context)
-            context = json.loads(context or '{}')
+            # converting context from string to dict
+            if isinstance(context, str):
+                context = json.loads(context or '{}')
             new_context.update(context)
 
             printer_id, printer_bin = user.with_context(**new_context).get_report_printer(report.id)
@@ -193,13 +205,16 @@ class ReportControllerProxy(ReportController):
         if not printer_id:
             return print_data
 
-        print_data["printer_id"] = printer_id
-        print_data["printer_bin"] = printer_bin
-        print_data["can_print"] = True
+        print_data['printer_id'] = printer_id
+        print_data['printer_bin'] = printer_bin
+        print_data['can_print'] = True
+        print_data['report_name'] = report.display_name
+        print_data['source_document'] = source_document
 
         return print_data
 
     @http.route('/report/check', type='http', auth="user")
+    @extend_request_context
     def report_check(self, data, context=None):
         print_data = self._check_direct_print(data, context)
         if print_data['can_print']:
@@ -207,6 +222,7 @@ class ReportControllerProxy(ReportController):
         return "false"
 
     @http.route('/report/print', type='http', auth="user")
+    @extend_request_context
     def report_print(self, data, context=None):
         """
         Handles sending a report to a printer.
@@ -249,7 +265,7 @@ class ReportControllerProxy(ReportController):
         printer_id = print_data['printer_id']
 
         # Finally if we reached this place - we can send report to printer.
-        standard_response = self.report_download(data, context)
+        standard_response = self.report_download(data, json.dumps(context))
 
         # If we do not have Content-Disposition headed, than no file-name
         # was generated (maybe error)
@@ -267,11 +283,26 @@ class ReportControllerProxy(ReportController):
                 'type': print_data['report_type'],
                 'size': report_policy and report_policy.report_paper_id,
                 'options': {'bin': printer_bin.name} if printer_bin else {},
+                'report_name': print_data['report_name'],
+                'source_document': print_data['source_document'],
             }
-            res = printer_id.printnode_print_b64(ascii_data, params)
+            res = printer_id.printnode_print_b64(ascii_data, params, postcommit=False)
 
             if res:
                 self._postprint_actions(print_data['model'], print_data.get('ids', []))
+
+        except UserError as exc:
+            error = {
+                'code': 200,
+                'message': 'Odoo Server Error',
+                'data': {
+                    'name': 'odoo.exceptions.UserError',
+                    'message': str(exc),
+                    'arguments': [str(exc)],
+                },
+            }
+            return request.make_response(json.dumps(error))
+
         except Exception as exc:
             _logger.exception(exc)
             error = {

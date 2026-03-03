@@ -5,7 +5,8 @@ import inspect
 import logging
 import psycopg2
 
-from odoo import api, fields, models, registry, SUPERUSER_ID
+from odoo import api, fields, models, SUPERUSER_ID
+from odoo.modules.registry import Registry
 
 _logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class PrintNodeLoggerMixin(models.AbstractModel):
     To add logging to a model, first inherit from this model: _inherit = ['printnode.logger.mixin']
     """
     _name = 'printnode.logger.mixin'
-    _description = 'PrintNode logger'
+    _description = 'Direct Print logger'
 
     def printnode_logger(self, log_type, log_string, **kwargs):
         """
@@ -61,8 +62,7 @@ class PrintNodeLoggerMixin(models.AbstractModel):
         """
         self.env['ir.logging'].flush_model()
         try:
-            db_registry = registry(db_name)
-            with db_registry.cursor() as cr:
+            with Registry(db_name).cursor() as cr:
                 env = api.Environment(cr, SUPERUSER_ID, {})
                 env['ir.logging'].sudo().create(logging_object)
         except psycopg2.Error as err:
