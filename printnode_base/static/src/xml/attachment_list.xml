@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="printnode_base.AttachmentListPrintButton"
+       t-inherit="mail.AttachmentList"
+       t-inherit-mode="extension">
+
+        <xpath expr="//div[contains(@class, 'o-mail-AttachmentCard-aside')]" position="attributes">
+            <attribute name="t-att-class">
+                {
+                    'o-hasMultipleActions d-flex flex-column':
+                        !env.inComposer and (
+                            showDelete or
+                            (canDownload(attachment) and canPrint() and !attachment.uploading and attachment.type !== 'url')
+                        )
+                }
+            </attribute>
+        </xpath>
+
+        <xpath expr="//button[@title='Download']" position="after">
+            <button t-if="canPrint() and !attachment.uploading and attachment.type !== 'url'"
+                    class="btn d-flex align-items-center justify-content-center w-100 h-100 rounded-0"
+                    t-attf-class="bg-300"
+                    t-on-click.stop="() => this.onClickPrint(attachment)"
+                    title="Print">
+                <i class="fa fa-print" role="img" aria-label="Print"/>
+            </button>
+        </xpath>
+
+    </t>
+</templates>

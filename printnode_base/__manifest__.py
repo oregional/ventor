@@ -15,9 +15,14 @@
         ERP Printing Solution | Odoo Print Automation | PrintNode Alternative |
         Seamless Printing in Odoo | Direct Printing in Odoo | Print Custom Labels Odoo |
         Print Without Downloading | Automatic Printing Odoo | Fast Printing from Odoo |
-        Thermal Printer Odoo | ZPL Printer Support
+        Thermal Printer Odoo | ZPL Printer Support | Print Label | Print Document | Print Order |
+        Print Transfer | Print PDF | Print ZPL | Print Invoice | Print Price | Print Purchase |
+        Print Barcode | Print Picking | Print Package | Print Lot | Print Serial | Auto Print |
+        Auto Printing | Print Scenario | Warehouse Printing | Remote Printing | Network Printing |
+        Print Agent | Print Assistant | Advanced Printing | POS | Multi Printing | Print Attachment |
+        POS Print | Print Serial Number | Direct Print POS | Odoo POS Printing Solution | Print POS
     ''',
-    'version': '17.0.2.8.0',
+    'version': '17.0.2.8.1',
     'category': 'Tools',
     "images": ["static/description/images/banner.gif"],
     'author': 'VentorTech',
@@ -98,9 +103,11 @@
         'web.assets_backend': [
             'printnode_base/static/src/js/constants.js',
             'printnode_base/static/src/js/action_service.js',
+            'printnode_base/static/src/js/attachment_list.js',
             'printnode_base/static/src/components/*/*.js',
             'printnode_base/static/src/components/*/*.css',
             'printnode_base/static/src/components/*/*.xml',
+            'printnode_base/static/src/xml/attachment_list.xml',
         ],
         'web.qunit_suite_tests': [
             'printnode_base/static/tests/printnode_base_mock_server.js',
