@@ -16,7 +16,7 @@
         Lot Label | Serial Label | Odoo ZPL | Designer Label | Creating Label | Create ZPL |
         Document Label | Package Label | Packaging Label | Price Label | Label Builder
     """,
-    'version': '17.0.1.3.5',
+    'version': '17.0.2.0.0',
     'category': 'Tools',
     "images": ["static/description/images/banner.gif"],
     'author': 'VentorTech',
@@ -24,7 +24,7 @@
     'support': 'support@ventor.tech',
     'license': 'OPL-1',
     'live_test_url': 'https://odoo.ventor.tech/',
-    'price': 99.00,
+    'price': 79.20,
     'currency': 'EUR',
     'depends': ['base', 'product', 'stock', 'product_expiry'],
     'data': [
