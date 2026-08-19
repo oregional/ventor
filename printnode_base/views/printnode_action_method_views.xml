@@ -7,7 +7,7 @@
             <field name="model">printnode.action.method</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Methods" editable="bottom">
+                <tree string="Button Methods" editable="bottom" js_class="printnode_action_methods_list">
                     <field name="model_id" />
                     <field name="name" />
                     <field name="method" />
@@ -22,10 +22,10 @@
             <field name="view_id" ref="printnode_action_method_tree" />
         </record>
 
-        <menuitem id="menu_printnode_methods"
-                  name="Methods"
-                  parent="menu_printnode_service"
-                  sequence="60"
+        <menuitem id="menu_button_methods"
+                  name="Button Methods"
+                  parent="menu_print_on_button_click"
+                  sequence="32"
                   action="printnode_action_methods"
         />
 
