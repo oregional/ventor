@@ -1,9 +1,10 @@
 # Copyright 2021 VentorTech OU
 # See LICENSE file for full copyright and licensing details.
 
-# This is important to load res.company first, as new attributes from this model used
-# in the other models
+# Load res.company and res.users first, as Direct Print fields from these
+# models are used by other models and wizards during registry initialization.
 from . import res_company
+from . import res_users
 from . import printnode_mixin
 from . import printnode_print_rule_mixin
 from . import printnode_logger
@@ -32,7 +33,6 @@ from . import printnode_base
 
 from . import base
 from . import res_config_settings
-from . import res_users
 from . import sale_order
 from . import account_move
 from . import purchase_order

@@ -214,7 +214,10 @@
 
                                             <div class="d-flex align-items-center mb-0">
                                                 <label for="company_printnode_printer" string='Default Printer (Company)' class="me-2 mb-0 text-nowrap fw-semibold form-label"></label>
-                                                <field name="company_printnode_printer" options="{'no_create': True}" class="flex-grow-1 mb-0 pb-0"/>
+                                                <field name="company_printnode_printer"
+                                                       options="{'no_create': True}"
+                                                       class="flex-grow-1 mb-0 pb-0"
+                                                       required="state == 'step_4' and company_printnode_enabled"/>
                                             </div>
                                             <p class="small text-muted mt-0">
                                                 Select the default printer for company.
@@ -235,7 +238,10 @@
 
                                             <div class="d-flex align-items-center mb-0">
                                                 <label for="user_printnode_printer" string='Default Printer (User)' class="me-2 mb-0 text-nowrap fw-semibold form-label"></label>
-                                                <field name="user_printnode_printer" options="{'no_create': True}" class="flex-grow-1 mb-0 pb-0"/>
+                                                <field name="user_printnode_printer"
+                                                       options="{'no_create': True}"
+                                                       class="flex-grow-1 mb-0 pb-0"
+                                                       required="state == 'step_4' and user_printnode_enabled"/>
                                             </div>
                                             <p class="small text-muted mt-0">
                                                 Select the default printer for user. This printer takes priority over the company printer for your user.
@@ -322,7 +328,13 @@
                                         type="object"
                                         string="Continue"
                                         class="btn btn-primary"
-                                        invisible="is_last_step"/>
+                                        invisible="is_last_step or state == 'step_1'"/>
+
+                                    <button name="go_to_next_step"
+                                        type="object"
+                                        string="I have a Subscription ⇾"
+                                        class="btn btn-primary"
+                                        invisible="is_last_step or state != 'step_1'"/>
 
                                     <button name="action_finish"
                                         type="object"

@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='messaging']" position="before">
                     <group string="Printers" name="printing" col="2" groups="printnode_base.printnode_security_group_user">
-                        <field name="printnode_enabled" />
+                        <field name="printnode_enabled" widget="boolean_toggle" />
                         <field name="printnode_printer" />
                         <div colspan="2" invisible="printnode_rule_ids.length == 0">
                             <div class="row justify-content-start">
@@ -24,7 +24,7 @@
                         <field name="printnode_rule_ids" invisible="1" />
                     </group>
                     <group string="Scales" name="scales" col="2" groups="printnode_base.printnode_security_group_user">
-                        <field name="scales_enabled" readonly="0" />
+                        <field name="scales_enabled" readonly="0" widget="boolean_toggle" />
                         <field name="printnode_scales" readonly="0"/>
                         <div colspan="2" invisible="scales_enabled == False">
                             <div class="row justify-content-start">
@@ -50,7 +50,7 @@
                 <notebook position="inside">
                     <page string="Direct Print Settings">
                         <group string="Printers" name="printing" col="2" groups="printnode_base.printnode_security_group_user">
-                            <field name="printnode_enabled" readonly="0" />
+                            <field name="printnode_enabled" readonly="0" widget="boolean_toggle" />
                             <field name="printnode_printer" readonly="0" required="printnode_enabled == True" />
                             <div colspan="2" invisible="printnode_rule_ids.length == 0">
                                 <div class="row justify-content-start">
@@ -65,7 +65,7 @@
                             <field name="printnode_rule_ids" invisible="1"/>
                         </group>
                         <group string="Scales" name="scales" col="2" groups="printnode_base.printnode_security_group_user">
-                            <field name="scales_enabled" readonly="0" />
+                            <field name="scales_enabled" readonly="0" widget="boolean_toggle" />
                             <field name="printnode_scales" readonly="0"/>
                             <div colspan="2" invisible="scales_enabled == False">
                                 <div class="row justify-content-start">
