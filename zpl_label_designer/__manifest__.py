@@ -25,7 +25,7 @@
         PDF Report Labels | Export Odoo Labels to PDF | PDF Conversion Odoo | Odoo ZPL PDF |
         Create PDF Labels | PDF Label Builder | PDF Barcode Labels
     """,
-    'version': '17.0.2.0.0',
+    'version': '17.0.2.1.0',
     'category': 'Tools',
     "images": ["static/description/images/banner.gif"],
     'author': 'VentorTech',
